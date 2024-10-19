@@ -9,3 +9,4 @@ togglePassword.addEventListener('click', () => {
     // Cambia l'emoji per rappresentare lo stato della visibilità
     togglePassword.textContent = type === 'password' ? '👁️' : '🙈';
 });
+

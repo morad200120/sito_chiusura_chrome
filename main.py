@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import user_agents
+import os
+import psutil
 
 app = Flask(__name__)
 app.secret_key = "s2f2h4*%!)81l#-nirpxe#*fd9-!+=&)0$ix=!8do%zot**z-p"
@@ -69,6 +71,21 @@ def mobile():
     if not session.get('logged_in'):
         return redirect(url_for("ottieni_ua"))  # Reindirizza al login se non autenticato
     return render_template("mobile.html")
+
+
+@app.route("/chiusura-chrome", methods=["POST"])
+def chiudi_chrome():
+    success = False
+    for proc in psutil.process_iter():
+        if "chrome" in proc.name().lower() or "chromium" in proc.name().lower():
+            proc.terminate()  # Termina il processo
+            success = True  # Qui correggo "succes" in "success"
+    
+    if success:
+        return {"success": True}, 200  # Ritorna risposta con successo
+    else:
+        return {"success": False}, 500  # Ritorna errore se Chrome non è stato trovato
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
