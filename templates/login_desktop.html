@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/login_desktop.css">
+    <title>Pagina di Login</title>
+</head>
+<body>
+    <div class="credential-box">
+        <form action="/login" method="post">  <!-- Azione aggiornata qui -->
+            <div class="input-box">
+                <input type="text" id="username-input" name="username" placeholder="username" required>
+                <input type="password" id="password-input" name="password" placeholder="password" required>
+            </div>
+            <span class="toggle-password">👁️</span>
+            <div class="button-container">
+                <button id="login-button" type="submit">Login</button>
+            </div>
+        </form>
+    </div>
+    <script src="/static/js/login_desktop.js"></script>
+</body>
+</html>
