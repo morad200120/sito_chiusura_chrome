@@ -11,7 +11,7 @@ USERNAME = "admin"
 PASSWORD = "password123"
 
 @app.route("/")
-def ottieni_ua():
+def ottieni_ua(pc_route, mobile_route):
     user_agent = request.headers.get('User-Agent')
     ua = user_agents.parse(user_agent)
 
