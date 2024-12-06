@@ -1,91 +1,99 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import user_agents
-import os
-import psutil
+import subprocess
+import invia_email
+import ngrok_server
+import threading
+
+#----------------------------------------------------------------------------------------------------
 
 app = Flask(__name__)
 app.secret_key = "s2f2h4*%!)81l#-nirpxe#*fd9-!+=&)0$ix=!8do%zot**z-p"
 
-# Credenziali fisse (per semplicità)
-USERNAME = "admin"
-PASSWORD = "password123"
+#----------------------------------------------------------------------------------------------------
 
-@app.route("/")
+USERNAME = "admin"
+PASSWORD = "admin"
+
+#----------------------------------------------------------------------------------------------------
+
 def ottieni_ua(pc_route, mobile_route):
     user_agent = request.headers.get('User-Agent')
     ua = user_agents.parse(user_agent)
+    return redirect(url_for(pc_route if ua.is_pc else mobile_route))
 
-    if ua.is_pc:
-        return redirect(url_for("login_desktop"))
-    else:
-        return redirect(url_for("login_mobile"))
+#----------------------------------------------------------------------------------------------------
 
-# Rotta per la pagina di login desktop
-@app.route("/login_desktop", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
+def first_redirect():
+    return ottieni_ua("login_desktop", "login_mobile")
+
+#----------------------------------------------------------------------------------------------------
+
+@app.route("/login_desktop", methods=["GET"])
 def login_desktop():
-    if request.method == "POST":
-        return login()
-
     return render_template("login_desktop.html")
-
-# Rotta per la pagina di login mobile
-@app.route("/login_mobile", methods=["GET", "POST"])
+    
+@app.route("/login_mobile", methods=["GET"])
 def login_mobile():
-    if request.method == "POST":
-        return login()
-
     return render_template("login_mobile.html")
 
-# Rotta per gestire il login (sia desktop che mobile)
+#----------------------------------------------------------------------------------------------------
+
 @app.route("/login", methods=["POST"])
 def login():
-    user_agent = request.headers.get('User-Agent')
-    ua = user_agents.parse(user_agent)
+    username = request.form.get("username")
+    password = request.form.get("password")
 
-    username_inserito = request.form.get("username")
-    password_inserita = request.form.get("password")
-
-    if username_inserito == USERNAME and password_inserita == PASSWORD:
-        session['logged_in'] = True  # Imposta la sessione per indicare che l'utente è autenticato
-        if ua.is_pc:
-            return redirect(url_for("desktop"))
-        else:
-            return redirect(url_for("mobile"))
+    if username == USERNAME and password == PASSWORD:
+        return ottieni_ua("desktop", "mobile")
     else:
-        error = "Credenziali non valide. Riprova."
-        if ua.is_pc:
-            return render_template("login_desktop.html", error=error)
-        else:
-            return render_template("login_mobile.html", error=error)
+        flash("Username o password errati", "error")
+        return ottieni_ua("login_desktop", "login_mobile")
 
-# Rotta per la dashboard desktop dopo il login
+#----------------------------------------------------------------------------------------------------
+
 @app.route("/desktop")
 def desktop():
-    if not session.get('logged_in'):
-        return redirect(url_for("ottieni_ua"))  # Reindirizza al login se non autenticato
     return render_template("desktop.html")
 
-# Rotta per la dashboard mobile dopo il login
 @app.route("/mobile")
 def mobile():
-    if not session.get('logged_in'):
-        return redirect(url_for("ottieni_ua"))  # Reindirizza al login se non autenticato
     return render_template("mobile.html")
 
+#----------------------------------------------------------------------------------------------------
 
-@app.route("/chiusura-chrome", methods=["POST"])
-def chiudi_chrome():
-    success = False
-    for proc in psutil.process_iter():
-        if "chrome" in proc.name().lower() or "chromium" in proc.name().lower():
-            proc.terminate()  # Termina il processo
-            success = True  # Qui correggo "succes" in "success"
+@app.route("/spegnimento", methods=["POST"])
+def spegnimento():
+    try:
+        subprocess.run("shutdown /s /t 0", shell=True)
+        flash("Il computer si sta spegnendo...", "success")
+    except Exception as e:
+        flash(f"Errore durante lo spegnimento: {str(e)}", "error")
+    finally:
+        return ottieni_ua("login_desktop", "login_mobile")
+
+#----------------------------------------------------------------------------------------------------
+
+def start_ngrok(port):
+    # Inizia il server ngrok in un thread separato
+    url = ngrok_server.start_server(port)
     
-    if success:
-        return {"success": True}, 200  # Ritorna risposta con successo
-    else:
-        return {"success": False}, 500  # Ritorna errore se Chrome non è stato trovato
+    # Scrivi l'URL nel file e svuotalo
+    with open("link.txt", "w") as file:
+        file.write(url)
 
+#----------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Porta per ngrok e Flask
+    port = 8080
+
+    # Avvia il server ngrok in un thread separato
+    ngrok_thread = threading.Thread(target=start_ngrok, args=(port,))
+    ngrok_thread.daemon = True  # La thread terminerà quando il programma principale termina
+    ngrok_thread.start()
+
+    # Avvia il server Flask
+    app.run(debug=True, host='0.0.0.0', port=port)
+

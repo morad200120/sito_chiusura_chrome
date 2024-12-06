@@ -55,3 +55,8 @@ body {
     width: 100px;
     height: 40px;
 }
+
+.error-message {
+    position: relative;
+    top: 50px;
+}

@@ -48,3 +48,8 @@ body {
     cursor: pointer;
 }
 
+.error-message {
+    position: relative;
+    top: 20px;
+}
+
