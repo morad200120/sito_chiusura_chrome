@@ -1,99 +1,60 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-import user_agents
-import subprocess
-import invia_email
-import ngrok_server
 import threading
+import flask_app
+import ngrok_server
+import invia_email
+import time
 
-#----------------------------------------------------------------------------------------------------
+port = 8080
 
-app = Flask(__name__)
-app.secret_key = "s2f2h4*%!)81l#-nirpxe#*fd9-!+=&)0$ix=!8do%zot**z-p"
+def run_flask():
+    flask_app.start_site(port)
 
-#----------------------------------------------------------------------------------------------------
+def run_ngrok(event):
+    ngrok_server.start_server(port, event)
 
-USERNAME = "admin"
-PASSWORD = "admin"
+def get_ngrok_url():
+    while True:
+        try:
+            with open("link.txt", "r") as file:
+                url = file.read().strip() 
+            if url:
+                return url
+        except FileNotFoundError:
+            print("Il file 'link.txt' non è stato trovato. Riprovo...")
+        
+        time.sleep(1) 
 
-#----------------------------------------------------------------------------------------------------
+def send_email(event):
+    event.wait()
 
-def ottieni_ua(pc_route, mobile_route):
-    user_agent = request.headers.get('User-Agent')
-    ua = user_agents.parse(user_agent)
-    return redirect(url_for(pc_route if ua.is_pc else mobile_route))
+    url = get_ngrok_url()  
 
-#----------------------------------------------------------------------------------------------------
-
-@app.route("/", methods=["GET"])
-def first_redirect():
-    return ottieni_ua("login_desktop", "login_mobile")
-
-#----------------------------------------------------------------------------------------------------
-
-@app.route("/login_desktop", methods=["GET"])
-def login_desktop():
-    return render_template("login_desktop.html")
+    oggetto = "Duccio ha acceso il computer :)"
+    contenuto = f"Duccio ha acceso il computer puoi spegnerlo da questo link: {url}"
     
-@app.route("/login_mobile", methods=["GET"])
-def login_mobile():
-    return render_template("login_mobile.html")
+    invia_email.invia_email(url, oggetto, contenuto)
 
-#----------------------------------------------------------------------------------------------------
+if __name__ == "__main__":
+    print("Avvio del server Flask e del tunnel ngrok...")
 
-@app.route("/login", methods=["POST"])
-def login():
-    username = request.form.get("username")
-    password = request.form.get("password")
+    event = threading.Event()
 
-    if username == USERNAME and password == PASSWORD:
-        return ottieni_ua("desktop", "mobile")
-    else:
-        flash("Username o password errati", "error")
-        return ottieni_ua("login_desktop", "login_mobile")
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    ngrok_thread = threading.Thread(target=run_ngrok, args=(event,), daemon=True)
+    email_thread = threading.Thread(target=send_email, args=(event,), daemon=True)
 
-#----------------------------------------------------------------------------------------------------
-
-@app.route("/desktop")
-def desktop():
-    return render_template("desktop.html")
-
-@app.route("/mobile")
-def mobile():
-    return render_template("mobile.html")
-
-#----------------------------------------------------------------------------------------------------
-
-@app.route("/spegnimento", methods=["POST"])
-def spegnimento():
-    try:
-        subprocess.run("shutdown /s /t 0", shell=True)
-        flash("Il computer si sta spegnendo...", "success")
-    except Exception as e:
-        flash(f"Errore durante lo spegnimento: {str(e)}", "error")
-    finally:
-        return ottieni_ua("login_desktop", "login_mobile")
-
-#----------------------------------------------------------------------------------------------------
-
-def start_ngrok(port):
-    # Inizia il server ngrok in un thread separato
-    url = ngrok_server.start_server(port)
-    
-    # Scrivi l'URL nel file e svuotalo
-    with open("link.txt", "w") as file:
-        file.write(url)
-
-#----------------------------------------------------------------------------------------------------
-
-if __name__ == '__main__':
-    # Porta per ngrok e Flask
-    port = 8080
-
-    # Avvia il server ngrok in un thread separato
-    ngrok_thread = threading.Thread(target=start_ngrok, args=(port,))
-    ngrok_thread.daemon = True  # La thread terminerà quando il programma principale termina
+    flask_thread.start()
     ngrok_thread.start()
+    email_thread.start()
 
-    # Avvia il server Flask
-    app.run(debug=True, host='0.0.0.0', port=port)
-
+    try:
+        while True:
+            if not flask_thread.is_alive():
+                print("Il server Flask si è arrestato.")
+                break
+            if not ngrok_thread.is_alive():
+                print("Il tunnel ngrok si è arrestato.")
+                break
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Chiusura del programma principale...")

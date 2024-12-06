@@ -3,7 +3,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 
-def invia_email(url):
+def invia_email(url, oggetto, contenuto):
     sender_email = "gpc493140@gmail.com"
     receiver_email = "botcomputerduccio@gmail.com"
     password = "wxjs osfv wdsu qloa"  # Usa una password per app se hai 2FA
@@ -12,10 +12,10 @@ def invia_email(url):
     message = MIMEMultipart()
     message["From"] = sender_email
     message["To"] = receiver_email
-    message["Subject"] = "Duccio ha acceso il computer"
+    message["Subject"] = oggetto
 
 
-    body = f"Duccio ha appena acceso il computer, questo è l'url de sito per spegnerlo :) {url}"
+    body = f"{contenuto} {url}"
     message.attach(MIMEText(body, "plain"))
 
     try:
