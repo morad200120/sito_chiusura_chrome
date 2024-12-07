@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import subprocess
+from win10toast import ToastNotifier
+import time
 import user_agents
 
 # ----------------------------------------------------------------------------------------------------
@@ -14,6 +16,7 @@ def start_site(port):
     PASSWORD = "admin"
 
     # ----------------------------------------------------------------------------------------------------
+
     def ottieni_ua(pc_route, mobile_route):
         user_agent = request.headers.get('User-Agent')
         ua = user_agents.parse(user_agent)
@@ -43,8 +46,16 @@ def start_site(port):
     @app.route("/spegnimento", methods=["POST"])
     def spegnimento():
         try:
+            toaster = ToastNotifier()
+            duration = 30
+            toaster.show_toast("Spegnimento del computer",
+                        f"Il computer si spegnera tra {duration} secondi.",
+                        duration=duration)
+    
+            time.sleep(duration)
+            
             subprocess.run("shutdown /s /t 0", shell=True)
-            flash("Il computer si sta spegnendo...", "success")
+            flash("Il computer si è spento", "success")
         except Exception as e:
             flash(f"Errore durante lo spegnimento: {str(e)}", "error")
         finally:
