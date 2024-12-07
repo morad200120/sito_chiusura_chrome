@@ -1,0 +1,54 @@
+* {
+    box-sizing: border-box;
+    margin: 0px;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.credential-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 350px;
+    height: 350px;
+    border: solid 5px red;
+    text-align: center;
+}
+
+.input-box {
+    gap:10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+}
+
+#username-input, #password-input {
+    padding: 10px;
+}
+
+#login-button {
+    position: relative;
+    top: 30px;
+    width: 100px;
+    height: 40px;
+}
+
+.toggle-password {
+    position: relative;
+    left: 80px;
+    bottom: 27px;
+    cursor: pointer;
+}
+
+.error-message {
+    position: relative;
+    top: 20px;
+}

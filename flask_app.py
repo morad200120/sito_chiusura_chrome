@@ -1,9 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
-import subprocess
-import win32api
-import win32con
+import os
 import time
 import user_agents
+import subprocess
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -13,8 +12,8 @@ def start_site(port):
 
     # ----------------------------------------------------------------------------------------------------
 
-    USERNAME = "admin"
-    PASSWORD = "admin"
+    USERNAME = "bloccocomputer"
+    PASSWORD = "Bloccacifrolo2009!"
 
     # ----------------------------------------------------------------------------------------------------
 
@@ -47,25 +46,14 @@ def start_site(port):
     @app.route("/spegnimento", methods=["POST"])
     def spegnimento():
         try:
-            title = "Spegnimento computer"
-            message = "Il computer si spegnerà fra 90 secondi"
-
-            # Visualizza la finestra di messaggio
-            win32api.MessageBox(0, message, title, win32con.MB_OK)
-
-            # Attendere 90 secondi prima di eseguire lo spegnimento
-            time.sleep(90)
-
-            # Esegui il comando per spegnere il computer
-            subprocess.run("shutdown /s /t 0", shell=True)
-
-            flash("Il computer si è spento", "success")
-
+            seconds = 90
+            subprocess.run(f"shutdown /s /t {seconds}", shell=True, check=True)
+            
+            flash("Il computer si spegnerà a breve.", "success")
+            return ottieni_ua("desktop", "mobile")
         except Exception as e:
             flash(f"Errore durante lo spegnimento: {str(e)}", "error")
-
-        finally:
-            return ottieni_ua("login_desktop", "login_mobile")
+            return ottieni_ua("desktop", "mobile")
 
     # ----------------------------------------------------------------------------------------------------
 
