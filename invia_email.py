@@ -2,6 +2,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+#----------------------------------------------------------------------------------------------------
 
 def invia_email(url, oggetto, contenuto):
     sender_email = "gpc493140@gmail.com"
@@ -31,3 +32,5 @@ def invia_email(url, oggetto, contenuto):
 
     finally:
         server.quit()
+
+#----------------------------------------------------------------------------------------------------

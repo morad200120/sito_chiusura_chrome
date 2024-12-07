@@ -4,7 +4,11 @@ import ngrok_server
 import invia_email
 import time
 
+#----------------------------------------------------------------------------------------------------
+
 port = 8080
+
+#----------------------------------------------------------------------------------------------------
 
 def run_flask():
     flask_app.start_site(port)
@@ -33,6 +37,8 @@ def send_email(event):
     contenuto = f"Duccio ha acceso il computer puoi spegnerlo da questo link: {url}"
     
     invia_email.invia_email(url, oggetto, contenuto)
+
+#----------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
     print("Avvio del server Flask e del tunnel ngrok...")

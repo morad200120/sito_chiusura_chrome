@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import subprocess
-from win10toast import ToastNotifier
+import win32api
+import win32con
 import time
 import user_agents
 
@@ -46,18 +47,23 @@ def start_site(port):
     @app.route("/spegnimento", methods=["POST"])
     def spegnimento():
         try:
-            toaster = ToastNotifier()
-            duration = 30
-            toaster.show_toast("Spegnimento del computer",
-                        f"Il computer si spegnera tra {duration} secondi.",
-                        duration=duration)
-    
-            time.sleep(duration)
-            
+            title = "Spegnimento computer"
+            message = "Il computer si spegnerà fra 90 secondi"
+
+            # Visualizza la finestra di messaggio
+            win32api.MessageBox(0, message, title, win32con.MB_OK)
+
+            # Attendere 90 secondi prima di eseguire lo spegnimento
+            time.sleep(90)
+
+            # Esegui il comando per spegnere il computer
             subprocess.run("shutdown /s /t 0", shell=True)
+
             flash("Il computer si è spento", "success")
+
         except Exception as e:
             flash(f"Errore durante lo spegnimento: {str(e)}", "error")
+
         finally:
             return ottieni_ua("login_desktop", "login_mobile")
 
@@ -88,3 +94,5 @@ def start_site(port):
         app.run(debug=True, host='0.0.0.0', port=port, use_reloader=False)
         
     run_server()
+
+#----------------------------------------------------------------------------------------------------
