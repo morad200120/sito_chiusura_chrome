@@ -1,0 +1,14 @@
+2025-01-23 22:04:31,564 - INFO - Opening tunnel named: http-8080-addff4d4-9b52-494d-a3e2-b43f3580857e
+2025-01-23 22:04:31,619 - INFO - t=2025-01-23T22:04:31+0100 lvl=info msg="no configuration paths supplied"
+2025-01-23 22:04:31,620 - INFO - t=2025-01-23T22:04:31+0100 lvl=info msg="using configuration at default config path" path=C:\\Users\\gpc49\\AppData\\Local/ngrok/ngrok.yml
+2025-01-23 22:04:31,620 - INFO - t=2025-01-23T22:04:31+0100 lvl=info msg="open config file" path=C:\\Users\\gpc49\\AppData\\Local\\ngrok\\ngrok.yml err=nil
+2025-01-23 22:04:31,621 - INFO - t=2025-01-23T22:04:31+0100 lvl=info msg="starting web service" obj=web addr=127.0.0.1:4040 allow_hosts=[]
+2025-01-23 22:04:32,111 - INFO - t=2025-01-23T22:04:32+0100 lvl=info msg="client session established" obj=tunnels.session
+2025-01-23 22:04:32,111 - INFO - t=2025-01-23T22:04:32+0100 lvl=info msg="tunnel session started" obj=tunnels.session
+2025-01-23 22:04:32,126 - INFO - t=2025-01-23T22:04:32+0100 lvl=info msg=start pg=/api/tunnels id=0fa3b882e726315f
+2025-01-23 22:04:32,126 - INFO - t=2025-01-23T22:04:32+0100 lvl=info msg=end pg=/api/tunnels id=0fa3b882e726315f status=200 dur=0s
+2025-01-23 22:04:32,127 - INFO - t=2025-01-23T22:04:32+0100 lvl=info msg=start pg=/api/tunnels id=f75f3ee2ae643a83
+2025-01-23 22:04:32,127 - INFO - t=2025-01-23T22:04:32+0100 lvl=info msg=end pg=/api/tunnels id=f75f3ee2ae643a83 status=200 dur=0s
+2025-01-23 22:04:32,127 - INFO - t=2025-01-23T22:04:32+0100 lvl=info msg=start pg=/api/tunnels id=bb7d26c4800fb007
+2025-01-23 22:04:32,266 - INFO - t=2025-01-23T22:04:32+0100 lvl=info msg="started tunnel" obj=tunnels name=http-8080-addff4d4-9b52-494d-a3e2-b43f3580857e addr=http://localhost:8080 url=https://1f12-2001-b07-6473-593f-4c77-7d81-7409-10cf.ngrok-free.app
+2025-01-23 22:04:32,266 - INFO - t=2025-01-23T22:04:32+0100 lvl=info msg=end pg=/api/tunnels id=bb7d26c4800fb007 status=201 dur=137.7862ms
