@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
 import os
 import time
 import user_agents
@@ -6,14 +8,17 @@ import subprocess
 
 # ----------------------------------------------------------------------------------------------------
 
+load_dotenv()
+
 def start_site(port):
+    
     app = Flask(__name__)
-    app.secret_key = "s2f2h4*%!)81l#-nirpxe#*fd9-!+=&)0$ix=!8do%zot**z-p"
+    app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
     # ----------------------------------------------------------------------------------------------------
 
-    USERNAME = "bloccocomputer"
-    PASSWORD = "Bloccacifrolo2009!"
+    USERNAME = os.getenv('USERNAME')
+    PASSWORD = os.getenv('PASSWORD')
 
     # ----------------------------------------------------------------------------------------------------
 
@@ -30,7 +35,7 @@ def start_site(port):
     
     # ----------------------------------------------------------------------------------------------------
 
-    @app.route("/login", methods=["POST"])
+    @app.route("/login", methods=["POST", "GET"])
     def login():
         username = request.form.get("username")
         password = request.form.get("password")
@@ -39,7 +44,7 @@ def start_site(port):
             return ottieni_ua("desktop", "mobile")
         else:
             flash("Username o password errati", "error")
-            return ottieni_ua("login_desktop", "login_mobile")
+            return redirect(url_for("login"))
         
     # ----------------------------------------------------------------------------------------------------
         

@@ -16,7 +16,7 @@ def invia_email(url, oggetto, contenuto):
     message["Subject"] = oggetto
 
 
-    body = f"{contenuto} {url}"
+    body = f"{contenuto}"
     message.attach(MIMEText(body, "plain"))
 
     try:

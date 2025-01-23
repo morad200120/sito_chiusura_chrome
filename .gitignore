@@ -1,3 +1,5 @@
 __pycache__/
 .vscode/
 sito_spegnimento_computer/
+.env
+link.txt
