@@ -3,4 +3,6 @@ __pycache__/
 sito_spegnimento_computer/
 .env
 link.txt
-flask.log
+requests.log
+errors.log
+critical_errors.log

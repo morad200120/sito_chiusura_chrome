@@ -25,25 +25,44 @@ def start_site(port):
         SESSION_PERMANENT=False,
         PERMANENT_SESSION_LIFETIME=timedelta(minutes=30))
 
+    # ----------------------------------------------------------------------------------------------------
 
-    log_filename = "flask.log"
-
-    logging.basicConfig(level=logging.INFO, 
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[logging.FileHandler(log_filename), logging.StreamHandler()])
-    
     logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
 
+
+    terminal_handler = logging.StreamHandler() 
+    terminal_handler.setLevel(logging.INFO)
+    terminal_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    terminal_handler.setFormatter(terminal_format)
+
+    request_handler = logging.FileHandler("requests.log")
+    request_handler.setLevel(logging.INFO)
+    request_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    request_handler.setFormatter(request_format)
+
+
+    error_handler = logging.FileHandler("errors.log")
+    error_handler.setLevel(logging.ERROR)
+    error_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    error_handler.setFormatter(error_format)
+
+
+    critical_handler = logging.FileHandler("critical_errors.log")
+    critical_handler.setLevel(logging.CRITICAL)
+    critical_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    critical_handler.setFormatter(critical_format)
+
+
+    logger.addHandler(terminal_handler)  
+    logger.addHandler(request_handler)  
+    logger.addHandler(error_handler)  
+    logger.addHandler(critical_handler)  
 
     # ----------------------------------------------------------------------------------------------------
 
     USERNAME = os.getenv('USERNAME')
     PASSWORD = os.getenv('PASSWORD')
-
-     # ----------------------------------------------------------------------------------------------------
-
-    limiter = Limiter(app)  # Create limiter with just the app
-    limiter.key_func = get_remote_address
 
     # ----------------------------------------------------------------------------------------------------
 
@@ -56,53 +75,74 @@ def start_site(port):
 
     @app.route("/", methods=["GET"])
     def first_redirect():
+        logger.info("Richiesta ricevuta: Prima redirezione")
+        log_request_data()
         return ottieni_ua("login_desktop", "login_mobile")
-    
+
     # ----------------------------------------------------------------------------------------------------
 
     failed_attempts = {}
     BLOCK_TIME = timedelta(minutes=15)
 
     @app.route("/login", methods=["POST", "GET"])
-    @limiter.limit("5 per minute")
     def login():
         username = request.form.get("username")
         password = request.form.get("password")
+
         ip_address = request.remote_addr
 
         current_time = datetime.now()
 
-        if ip_address in failed_attempts:
-            failed_data = failed_attempts[ip_address]
-            if failed_data['attempts'] >= 3 and (current_time - failed_data['last_attempt']) < BLOCK_TIME:
-                flash("Troppi tentativi falliti. Riprovare più tardi.", "error")
-                return redirect(url_for("login"))
-            elif (current_time - failed_data['last_attempt']) > BLOCK_TIME:
-                failed_attempts[ip_address] = {'attempts': 0, 'last_attempt': current_time}
+
+
+
+        if request.method == 'GET':
+            return render_template("login_desktop.html")
 
 
         if username == USERNAME and password == PASSWORD:
-            failed_attempts[ip_address] = {'attempts': 0, 'last_attempt': current_time}  
+            failed_attempts[ip_address] = {'attempts': 0, 'last_attempt': current_time}
+            log_request_data()  
+            logger.info(f"Login riuscito per {username} da {ip_address}")
             return ottieni_ua("desktop", "mobile")
         else:
+            failed_attempts[ip_address] = {
+                'attempts': failed_attempts.get(ip_address, {}).get('attempts', 0) + 1,
+                'last_attempt': current_time
+            }
             flash("Username o password errati", "error")
-            failed_attempts[ip_address] = {'attempts': failed_attempts.get(ip_address, {}).get('attempts', 0) + 1, 'last_attempt': current_time}
+            log_request_data() 
+            logger.error(f"Login fallito per {username} da {ip_address}")
             return redirect(url_for("login"))
+
+    # ----------------------------------------------------------------------------------------------------
+
+    def log_request_data():
+        user_agent = request.headers.get('User-Agent')
+        ua = user_agents.parse(user_agent)
+        device = ua.device.family
+        browser = ua.browser.family  
+        model = ua.device.model if ua.device.model else "Unknown"
+        ip_address = request.remote_addr 
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Data e ora
+
+   
+        logger.info(f"Data/Ora: {timestamp} | IP: {ip_address} | Dispositivo: {device} | "
+                    f"Browser: {browser} | Modello: {model}")
 
     # ----------------------------------------------------------------------------------------------------
         
     @app.route("/spegnimento", methods=["POST"])
-    @limiter.limit("1 per minute")
     def spegnimento():
         try:
             seconds = 90
             subprocess.run(f"shutdown /s /t {seconds}", shell=True, check=True)
-            
+            logger.info(f"Il computer si spegnerà tra {seconds} secondi.")
             flash("Il computer si spegnerà a breve.", "success")
             return ottieni_ua("desktop", "mobile")
         except Exception as e:
+            logger.error(f"Errore durante lo spegnimento: {str(e)}")
             flash(f"Errore durante lo spegnimento: {str(e)}", "error")
-            logger.error(f"Error during shutdown: {str(e)}")
             return ottieni_ua("desktop", "mobile")
 
     # ----------------------------------------------------------------------------------------------------
@@ -129,8 +169,8 @@ def start_site(port):
 
     def run_server():
         logger.info(f"Avviando il sito sulla porta {port}...")
-        app.run(debug=True, host='0.0.0.0', port=443, ssl_context=('cert.pem', 'key.pem'))
-        
+        app.run(debug=True, host='0.0.0.0', port=8080, use_reloader=False)
+
     run_server()
 
 #----------------------------------------------------------------------------------------------------
