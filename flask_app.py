@@ -55,20 +55,15 @@ logger = setup_logger()
 
 # ----------------------------------------------------------------------------------------------------
 # Funzione per ottenere l'User-Agent e redirigere in base al tipo di dispositivo
-def ottieni_ua(pc_route, mobile_route):
+def ottieni_ua(pc_template, mobile_template):
     user_agent = request.headers.get('User-Agent')
     ua = user_agents.parse(user_agent)
-    return redirect(url_for(pc_route if ua.is_pc else mobile_route))
+    return render_template(pc_template if ua.is_pc else mobile_template)
 
 # ----------------------------------------------------------------------------------------------------
 # Definizione delle variabili di login
 USERNAME = os.getenv('USERNAME')
 PASSWORD = os.getenv('PASSWORD')
-
-# ----------------------------------------------------------------------------------------------------
-# Gestione dei tentativi falliti di login
-failed_attempts = {}
-BLOCK_TIME = timedelta(minutes=15)
 
 # ----------------------------------------------------------------------------------------------------
 # Funzione per loggare i dettagli della richiesta
@@ -90,7 +85,7 @@ def log_request_data():
 def first_redirect():
     logger.info("Richiesta ricevuta: Prima redirezione")
     log_request_data()
-    return ottieni_ua("login_desktop", "login_mobile")
+    return redirect(url_for("login_dashboard"))
 
 # ----------------------------------------------------------------------------------------------------
 # Route per il login
@@ -101,24 +96,16 @@ def login():
     ip_address = request.remote_addr
     current_time = datetime.now()
 
-    if request.method == 'GET':
-        return render_template("login_desktop.html")
-
     # Verifica delle credenziali
     if username == USERNAME and password == PASSWORD:
-        failed_attempts[ip_address] = {'attempts': 0, 'last_attempt': current_time}
         log_request_data()
         logger.info(f"Login riuscito per {username} da {ip_address}")
-        return ottieni_ua("desktop", "mobile")
+        return redirect(url_for("dashboard"))
     else:
-        failed_attempts[ip_address] = {
-            'attempts': failed_attempts.get(ip_address, {}).get('attempts', 0) + 1,
-            'last_attempt': current_time
-        }
         flash("Username o password errati", "error")
         log_request_data()
         logger.error(f"Login fallito per {username} da {ip_address}")
-        return redirect(url_for("login"))
+        return redirect(url_for("login_dashboard"))
 
 # ----------------------------------------------------------------------------------------------------
 # Route per il comando di spegnimento del computer
@@ -133,31 +120,20 @@ def spegnimento():
     except Exception as e:
         logger.error(f"Errore durante lo spegnimento: {str(e)}")
         flash(f"Errore durante lo spegnimento: {str(e)}", "error")
-        return ottieni_ua("desktop", "mobile")
+        return redirect(url_for("dashboard"))
 
 # ----------------------------------------------------------------------------------------------------
 # Route per la pagina di login desktop
-@app.route("/login_desktop", methods=["GET"])
-def login_desktop():
-    return render_template("login_desktop.html")
+@app.route("/login_dashboard", methods=["GET"])
+def login_dashboard():
+    return ottieni_ua("login_desktop", "login_mobile")
 
 # ----------------------------------------------------------------------------------------------------
-# Route per la pagina di login mobile
-@app.route("/login_mobile", methods=["GET"])
-def login_mobile():
-    return render_template("login_mobile.html")
 
-# ----------------------------------------------------------------------------------------------------
 # Route per la pagina desktop
-@app.route("/desktop")
-def desktop():
-    return render_template("desktop.html")
-
-# ----------------------------------------------------------------------------------------------------
-# Route per la pagina mobile
-@app.route("/mobile")
-def mobile():
-    return render_template("mobile.html")
+@app.route("/dashboard", methods=["GET"])
+def dashboard():
+    return ottieni_ua("desktop", "mobile")
 
 # ----------------------------------------------------------------------------------------------------
 # Funzione per avviare il server
