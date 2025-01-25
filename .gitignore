@@ -3,6 +3,8 @@ __pycache__/
 sito_spegnimento_computer/
 .env
 link.txt
-requests.log
-errors.log
-critical_errors.log
+debug.log
+info.log
+warning.log
+error.log
+critical.log
