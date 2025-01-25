@@ -25,23 +25,38 @@ app.config.update(
 )
 
 # ----------------------------------------------------------------------------------------------------
-# Configurazione del logger
-def setup_logger(log_file="app.log"):
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(log_file, encoding='utf-8')
-    handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-    logger.addHandler(handler)
-    return logger
+# Configurazione dei logger separati
+def setup_loggers():
+    loggers = {}
+    levels = {
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "CRITICAL": logging.CRITICAL
+    }
 
-logger = setup_logger()
+    for level_name, level in levels.items():
+        logger = logging.getLogger(level_name)
+        logger.setLevel(level)
+
+        handler = logging.FileHandler(f"{level_name.lower()}.log", encoding='utf-8')
+        handler.setLevel(level)
+        handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+        logger.addHandler(handler)
+        loggers[level_name] = logger
+
+    return loggers
+
+loggers = setup_loggers()
 
 # ----------------------------------------------------------------------------------------------------
 # Funzione per loggare i dettagli della richiesta
 def log_request_data():
     user_agent = request.headers.get('User-Agent', 'Unknown')
     ua = parse(user_agent)
-    logger.info(f"IP: {request.remote_addr} | Device: {ua.device.family} | Browser: {ua.browser.family}")
+    loggers["INFO"].info(f"IP: {request.remote_addr} | Device: {ua.device.family} | Browser: {ua.browser.family}")
 
 # ----------------------------------------------------------------------------------------------------
 # Funzione per redirigere in base al tipo di dispositivo
@@ -56,6 +71,7 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if not session.get('logged_in'):
             flash("Access denied. Please log in.", "error")
+            loggers["WARNING"].warning(f"Accesso non autorizzato da IP: {request.remote_addr}")
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -69,7 +85,7 @@ PASSWORD = os.getenv('PASSWORD')
 # Route principale
 @app.route("/", methods=["GET"])
 def index():
-    logger.info("Accesso alla homepage")
+    loggers["INFO"].info("Accesso alla homepage")
     log_request_data()
     return determine_route("login", "login")
 
@@ -84,11 +100,11 @@ def login():
         if username == USERNAME and password == PASSWORD:
             session['logged_in'] = True
             flash("Login successful!", "success")
-            logger.info(f"Login riuscito per {username} da {request.remote_addr}")
+            loggers["INFO"].info(f"Login riuscito per {username} da {request.remote_addr}")
             return redirect(url_for("dashboard"))
         else:
             flash("Invalid username or password.", "error")
-            logger.warning(f"Login fallito per {username} da {request.remote_addr}")
+            loggers["ERROR"].error(f"Login fallito per {username} da {request.remote_addr}")
             return redirect(url_for("login"))
 
     return render_template("login_desktop.html")
@@ -100,7 +116,7 @@ def login():
 def dashboard():
     is_pc = parse(request.headers.get('User-Agent', '')).is_pc
     template = "desktop.html" if is_pc else "mobile.html"
-    logger.info("Accesso alla dashboard")
+    loggers["INFO"].info("Accesso alla dashboard")
     return render_template(template)
 
 # ----------------------------------------------------------------------------------------------------
@@ -111,10 +127,10 @@ def shutdown():
     try:
         seconds = 90
         subprocess.run(f"shutdown /s /t {seconds}", shell=True, check=True)
-        logger.info(f"Il computer si spegnerà tra {seconds} secondi.")
+        loggers["INFO"].info(f"Il computer si spegnerà tra {seconds} secondi.")
         flash("The computer will shut down shortly.", "success")
     except Exception as e:
-        logger.error(f"Errore durante lo spegnimento: {str(e)}")
+        loggers["CRITICAL"].critical(f"Errore durante lo spegnimento: {str(e)}")
         flash(f"Error during shutdown: {str(e)}", "error")
     return redirect(url_for("dashboard"))
 
@@ -124,13 +140,13 @@ def shutdown():
 def logout():
     session.clear()
     flash("You have been logged out.", "success")
-    logger.info("Logout eseguito.")
+    loggers["INFO"].info("Logout eseguito.")
     return redirect(url_for("login"))
 
 # ----------------------------------------------------------------------------------------------------
 # Funzione per avviare il server
 def run_server(port):
-    logger.info(f"Avviando il sito sulla porta {port}...")
+    loggers["INFO"].info(f"Avviando il sito sulla porta {port}...")
     app.run(debug=True, host='0.0.0.0', port=port, use_reloader=False)
 
 # ----------------------------------------------------------------------------------------------------
