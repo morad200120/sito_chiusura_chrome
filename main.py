@@ -11,10 +11,10 @@ port = 8080
 #----------------------------------------------------------------------------------------------------
 
 def run_flask():
-    flask_app.start_site(port)
+    flask_app.run_server(port)
                                                                         
 def run_ngrok(event):
-    ngrok_server.start_server(port, event)
+    ngrok_server.run_server(port, event)
 
 def get_ngrok_url():
     while True:

@@ -4,7 +4,7 @@ import threading
 
 #----------------------------------------------------------------------------------------------------
 
-def start_server(port, event):
+def run_server(port, event):
     ngrok.set_auth_token("2poAzhdBhUIsEJ6nAPK1FgN2p6o_486mq2uwgRLDeHsKWjiaB")
 
     tunnel = ngrok.connect(port)
